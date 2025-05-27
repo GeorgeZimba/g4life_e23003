@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////////////////////
+ ////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -402,21 +402,21 @@ void CalHistograms::FillHistogramsNoGate(GretinaCalc* gr, S800Calc* s800, Mode3C
 
 
 
-  Double_t sum =0;
+  /*Double_t sum =0;
   for(UShort_t c=0; c<hodo->GetEnergy()->size();c++){
     Short_t ch = hodo->GetChannel()->at(c);
-    Fill(Form("hodo_%d",ch),1000,0,4000,hodo->GetEnergy()->at(c));
-    Fill("hodo_vs_ch",32,0,32,ch,1000,0,4000,hodo->GetEnergy()->at(c));
-    Fill("hodo_all",1000,0,4000,hodo->GetEnergy()->at(c));
-    Fill(Form("hodotime_%d",ch),1000,0,4000,hodo->GetTime());
-    Fill("hodotime_vs_ch",32,0,32,ch,1000,0,4000,hodo->GetTime());
-    Fill("hodotime_all",1000,0,4000,hodo->GetTime());
+   // Fill(Form("hodo_%d",ch),1000,0,4000,hodo->GetEnergy()->at(c));
+   /// Fill("hodo_vs_ch",32,0,32,ch,1000,0,4000,hodo->GetEnergy()->at(c));
+    //Fill("hodo_all",1000,0,4000,hodo->GetEnergy()->at(c));
+    //Fill(Form("hodotime_%d",ch),1000,0,4000,hodo->GetTime());
+    //Fill("hodotime_vs_ch",32,0,32,ch,1000,0,4000,hodo->GetTime());
+    //Fill("hodotime_all",1000,0,4000,hodo->GetTime());
   
 
     if(hodo->GetEnergy()->at(c)>50)
       sum+=hodo->GetEnergy()->at(c);
   }// hodo energy
-  Fill("hodo_sum",1000,0,4000,sum);
+  Fill("hodo_sum",1000,0,4000,sum);*/
 
 
 
@@ -496,15 +496,13 @@ void CalHistograms::FillHistogramsGateIn(GretinaCalc* gr, S800Calc* s800, Mode3C
   
 
 
-  Double_t sum =0;
+  /*Double_t sum =0;
   for(UShort_t c=0; c<hodo->GetEnergy()->size();c++){
     if(hodo->GetEnergy()->at(c)>50)
       sum+=hodo->GetEnergy()->at(c);
   }//hodo energy
-  Fill(Form("hodo_sum_%s",inname),1000,0,4000,sum);
+  Fill(Form("hodo_sum_%s",inname),1000,0,4000,sum);*/
  
-
-  
 
   for(UShort_t i=0;i<tof->GetMOBJV()->size();i++){
     for(UShort_t j=0;j<tof->GetMXFPV()->size();j++){
@@ -553,28 +551,321 @@ void CalHistograms::FillHistogramsGateOut(GretinaCalc* gr, S800Calc* s800, Mode3
 
   Fill(Form("ICde_vs_objmc_%s",oname.Data()),1300,-4000,-3300,tof->GetMOBJC(),4000,0,4000,ich->GetDE());
 
-  Double_t sum =0;
-  for(UShort_t c=0; c<hodo->GetEnergy()->size();c++){
-    Short_t ch = hodo->GetChannel()->at(c);
-     Fill(Form("hodo_ch%d_%s",ch,oname.Data()),1000,0,4000,hodo->GetEnergy()->at(c));
-     Fill(Form("hodo_vs_ch_%s",oname.Data()),32,0,32,ch,1000,0,4000,hodo->GetEnergy()->at(c));
-     Fill(Form("hodo_all_%s",oname.Data()),1000,0,4000,hodo->GetEnergy()->at(c));
-     Fill(Form("hodotime_ch%d_%s",ch,oname.Data()),1000,0,4000,hodo->GetTime());
-     Fill(Form("hodotime_vs_ch_%s",oname.Data()),32,0,32,ch,1000,0,4000,hodo->GetTime());
-     //Fill(Form("hodotime_all_%s",oname.Data()),1000,0,4000,hodo->GetTime());
 
-    Fill(Form("hodotime_all_%s",oname.Data()),3000,0,3000,hodo->GetTime());
-    Fill(Form("hodotime_vs_energy_%s",oname.Data()),1000,0,2000,hodo->GetEnergy()->at(c),3000,0,3000,hodo->GetTime());
+  Fill(Form("ata_%s",oname.Data()),
+       200,-100,100,track->GetATA());
+  Fill(Form("bta_%s",oname.Data()),
+       200,-100,100,track->GetBTA());
+  Fill(Form("yta_%s",oname.Data()),
+       100,-50,50,track->GetYTA());
+  Fill(Form("dta_%s",oname.Data()),
+       200,-10,10,track->GetDTA());
+
+// === before the loop: initialize all sums ===
+// === per‐event reset ===
+/*Double_t sum               = 0.0;
+Double_t sum_Ch0_Ch3       = 0.0;
+Double_t sum_Ch4_Ch7       = 0.0;
+Double_t sum_Ch8_Ch11      = 0.0;
+Double_t sum_Ch12_Ch15     = 0.0;
+Double_t sum_Ch16_Ch19     = 0.0;
+Double_t sum_Ch20_Ch23     = 0.0;
+Double_t sum_Ch24_Ch27     = 0.0;
+Double_t sum_Ch28_Ch31     = 0.0;
+
+Double_t time_hodo = 0.0;
+// …and any of your other “sum_ChX_ChY” variables…
+
+UShort_t n_hits_notimecut  = 0;
+bool     channel_hit[32]   = {false};
+UShort_t multiplicity_hodo = 0;
+std::vector<int> fired;
+fired.reserve(32);
+
+int    Channel = 0;
+// === hit loop ===
+for (size_t i = 0; i < hodo->GetEnergy()->size(); ++i) {
+    int    ch = hodo->GetChannel()->at(i);
+    Channel = hodo->GetChannel()->at(i);
+    double E  = hodo->GetEnergy()->at(i);
+    time_hodo  = hodo->GetTime();
+   
+    // always fill the per‐channel spectra:
+    Fill(Form("hodo_all_%s",oname.Data()),   4000, 0, 4000, E);
+
+    // only accumulate if above threshold:
+    if (E > 0.0) {
+        sum += E;
+        ++n_hits_notimecut;
+
+        // per‐channel sum‐ranges:
+        if      (ch <=  3) sum_Ch0_Ch3   += E;
+        else if (ch <=  7) sum_Ch4_Ch7   += E;
+        else if (ch <= 11) sum_Ch8_Ch11  += E;
+        else if (ch <= 15) sum_Ch12_Ch15 += E;
+        else if (ch <= 19) sum_Ch16_Ch19 += E;
+        else if (ch <= 23) sum_Ch20_Ch23 += E;
+        else if (ch <= 27) sum_Ch24_Ch27 += E;
+        else               sum_Ch28_Ch31 += E;
+
+        if (!channel_hit[ch]) {
+            channel_hit[ch] = true;
+            ++multiplicity_hodo;
+            fired.push_back(ch);
+        }
+    }
+}
+
+// === after loop ===
+Fill("hodo_sum",4000, 0, 4000, sum);
+Fill("hodo_time",4400, -200, 4200,time_hodo);
+//Fill("hodo_time_sum",4400, -200, 4200,time_hodo,4000, 0, 4000, sum);
+Fill("Multiplicity_Hodo",   40,  -2,   40, multiplicity_hodo);
+Fill("hodo_sum_vs_mult",    4000, 0, 4000, sum,40,  -2,   40, multiplicity_hodo);
+//Fill("hodo_time_vs_mult",4400, -200, 4200,time_hodo,40,  -2,   40, multiplicity_hodo);
+Fill(Form("hodo_sum_%s",oname.Data()), 4000, 0, 4000, sum);
+Fill(Form("hodo_time_sum_%s",oname.Data()),4400, -200, 4200,time_hodo,4000, 0, 4000, sum);
+Fill(Form("hodo_time_%s",oname.Data()),4400, -200, 4200,time_hodo);
+Fill(Form("hodo_time_mult_%s",oname.Data()),4400, -200, 4200,time_hodo,40,  -2,   40, multiplicity_hodo);
+
+Fill(Form("hodo_time_mult_%s",oname.Data()),32, 0, 32,Channel,40,  -2,   40, multiplicity_hodo);
+// exactly one hit
+if (multiplicity_hodo == 1) {
+    Fill("hodo_sum_m1", 4000, 0, 4000, sum);
+    Fill(Form("hodo_sum_m1_%s",oname.Data()),4000, 0, 4000, sum);
+    Fill(Form("hodo_time_sum_m1_%s",oname.Data()),4400, -200, 4200,time_hodo,4000, 0, 4000, sum);
+}
+
+bool passCross = false;
+for (size_t iF = 0; iF < fired.size(); ++iF) {
+    int ch = fired[iF];
+    int row = ch / 4;
+    int col = ch % 4;
+    // up
+    if (row > 0   && channel_hit[ch - 4])      { passCross = true; }
+    // down
+    else if (row < 7 && channel_hit[ch + 4])   { passCross = true; }
+    // left
+    else if (col > 0 && channel_hit[ch - 1])   { passCross = true; }
+    // right
+    else if (col < 3 && channel_hit[ch + 1])   { passCross = true; }
+
+    if (passCross) break;
+}
+
+if (passCross) {
+    Fill("hodo_cross_sumE",       4000, 0, 4000, sum);
+    Fill(Form("hodo_cross_sumE_%s", oname.Data()), 4000, 0, 4000, sum);
+    Fill(Form("hodo_cross_time_sum_%s", oname.Data()),
+         4400, -200, 4200, time_hodo, 4000, 0, 4000, sum);
+}
+
+bool passNon1 = false;
+for (size_t iF = 0; iF < fired.size(); ++iF) {
+    int ch = fired[iF];
+    int row = ch / 4, col = ch % 4;
+    std::vector<int> nbrs;
+    if (row > 0   && channel_hit[ch-4]) nbrs.push_back(ch-4);
+    if (row < 7   && channel_hit[ch+4]) nbrs.push_back(ch+4);
+    if (col > 0   && channel_hit[ch-1]) nbrs.push_back(ch-1);
+    if (col < 3   && channel_hit[ch+1]) nbrs.push_back(ch+1);
+
+    if (nbrs.size() == 1) {
+        int adj = nbrs[0];
+        int r2 = adj/4, c2 = adj%4;
+        std::vector<int> nbrs2;
+        if (r2 > 0 && channel_hit[adj-4] && (adj-4)!=ch) nbrs2.push_back(adj-4);
+        if (r2 < 7 && channel_hit[adj+4] && (adj+4)!=ch) nbrs2.push_back(adj+4);
+        if (c2 > 0 && channel_hit[adj-1] && (adj-1)!=ch) nbrs2.push_back(adj-1);
+        if (c2 < 3 && channel_hit[adj+1] && (adj+1)!=ch) nbrs2.push_back(adj+1);
+
+        if (nbrs2.empty()) {
+            passNon1 = true;
+            break;
+        }
+    }
+}
+if (passNon1) {
+    Fill("hodo_non1_sumE",       4000, 0, 4000, sum);
+    Fill(Form("hodo_non1_sumE_%s", oname.Data()), 4000, 0, 4000, sum);
+    Fill(Form("hodo_non1_time_sum_%s", oname.Data()),
+         4400, -200, 4200, time_hodo, 4000, 0, 4000, sum);
+}
+
+
+// --- at start of FillHistogramsGateOut, after you have `oname` ---
+// look for an existing 3D map
+TH3F* hmap3d = dynamic_cast<TH3F*>(
+    gDirectory->FindObject(Form("hodo_map3d_%s", oname.Data()))
+);
+if (!hmap3d) {
+    // not found: create it
+    hmap3d = new TH3F(
+      Form("hodo_map3d_%s", oname.Data()),
+      "column vs row vs energy",
+      4, 0, 4,      // X: 4 columns (0–3)
+      8, 0, 8,      // Y: 8 rows    (0–7)
+      4000, 0,4000 // Z: energy bins
+    );
+}
+
+
+for (size_t i = 0; i < hodo->GetEnergy()->size(); ++i) {
+    int    ch      = hodo->GetChannel()->at(i);
+    Double_t energy = hodo->GetEnergy()->at(i);    // <-- make sure this is DOUBLE
+    time_hodo       = hodo->GetTime();
+
+    // your other per‐channel logic …
+
+    // now compute col/row and fill the 3D map:
+    int col = ch % 4;     // 0..3
+    int row = ch / 4;     // 0..7
+
+    hmap3d->Fill( (Double_t)col,
+                  (Double_t)row,
+                  energy            // <— here is a true Double_t
+    );
+}
 
 
 
-  if(hodo->GetEnergy()->at(c)>50)
-      sum+=hodo->GetEnergy()->at(c);
-  }// hodo energy
-  if(sum>0.){
-  Fill(Form("hodo_sum_%s",oname.Data()),1000,0,2000,sum);
-  }
-  
+
+
+   
+
+
+    bool passNon1 = false;
+
+    for (int ch : fired) {
+        int row = ch/4, col = ch%4;
+        std::vector<int> nbrs;
+
+        // collect its fired neighbors
+        if (row > 0   && channel_hit[ch-4])       nbrs.push_back(ch-4);
+        if (row < 7   && channel_hit[ch+4])       nbrs.push_back(ch+4);
+        if (col > 0   && channel_hit[ch-1])       nbrs.push_back(ch-1);
+        if (col < 3   && channel_hit[ch+1])       nbrs.push_back(ch+1);
+
+        // must have exactly one neighbor
+        if (nbrs.size() == 1) {
+            int adj = nbrs[0];
+            int r2 = adj/4, c2 = adj%4;
+            std::vector<int> nbrs2;
+
+            // collect neighbors of that neighbor (excluding back-link to ch)
+            if (r2 > 0 && channel_hit[adj-4] && (adj-4)!=ch) nbrs2.push_back(adj-4);
+            if (r2 < 7 && channel_hit[adj+4] && (adj+4)!=ch) nbrs2.push_back(adj+4);
+            if (c2 > 0 && channel_hit[adj-1] && (adj-1)!=ch) nbrs2.push_back(adj-1);
+            if (c2 < 3 && channel_hit[adj+1] && (adj+1)!=ch) nbrs2.push_back(adj+1);
+
+            // that neighbor must have NO other neighbors
+            if (nbrs2.empty()) {
+                passNon1 = true;
+                break;
+            }
+        }
+    }
+
+    if (passNon1) {
+        Fill("hodo_non1_sumE",       4000, 0, 4000, sum);
+        Fill(Form("hodo_non1_sumE_%s", oname.Data()),4000, 0, 4000, sum);
+        Fill(Form("hodo_non1_time_sum_%s", oname.Data()),4400, -200, 4200, time_hodo,4000, 0, 4000, sum);
+    }
+// exactly two hits → check adjacency
+if (multiplicity_hodo == 2) {
+    Fill("hodo_sum_m2", 4000, 0, 4000, sum);
+    Fill(Form("hodo_sum_m2_%s",oname.Data()), 4000, 0, 4000, sum);
+    Fill(Form("hodo_time_sum_m2_%s",oname.Data()),4400, -200, 4200,time_hodo,4000, 0, 4000, sum);
+    int a = fired[0], b = fired[1];
+    int ra = a/4, ca = a%4, rb = b/4, cb = b%4;
+    int dr = abs(ra - rb), dc = abs(ca - cb);
+    if (dr <= 1 && dc <= 1 && (dr + dc > 0)) {
+        Fill("hodo_adjacent_pair_sumE", 4000, 0, 4000, sum);
+        Fill(Form("hodo_adjacent_pair_sumE_%s",oname.Data()),4000, 0, 4000, sum);
+        Fill(Form("hodo_adjacent_pair_time_sum_%s",oname.Data()),4400, -200, 4200,time_hodo,4000, 0, 4000, sum);
+    }
+}
+
+// exactly four hits → scan for 2×2 block
+if (multiplicity_hodo == 4) {
+    Fill("hodo_sum_m4", 4000, 0, 4000, sum);
+    Fill(Form("hodo_sum_m4_%s",oname.Data()),4000, 0, 4000, sum);
+    Fill(Form("hodo_time_sum_m4_%s",oname.Data()),4400, -200, 4200,time_hodo,4000, 0, 4000, sum);
+    bool found2x2 = false;
+    for (int row = 0; row < 7 && !found2x2; ++row) {
+        for (int col = 0; col < 3 && !found2x2; ++col) {
+            int c0 = row*4 + col;
+            int c1 = c0 + 1;
+            int c2 = c0 + 4;
+            int c3 = c2 + 1;
+            if (channel_hit[c0] && channel_hit[c1] &&
+                channel_hit[c2] && channel_hit[c3]) {
+                found2x2 = true;
+            }
+        }
+    }
+    if (found2x2) {
+        Fill("hodo_2x2_block_sumE", 4000, 0, 4000, sum);
+        Fill(Form("hodo_2x2_block_sumE_%s",oname.Data()),4000, 0, 4000, sum);
+        Fill(Form("hodo_2x2_block_time_sum_%s",oname.Data()),4400, -200, 4200,time_hodo,4000, 0, 4000, sum);
+    }
+}
+
+
+// … and finally the per‐event cleanup if you’re in a manual loop.
+// but if this is inside your framework’s “ProcessEvent” you’re done.
+
+
+Fill("hodo_sum_ch1_ch11",4000, 0, 4000, sum_Ch1_Ch11);
+Fill("hodo_sum_ch0_ch11",4000, 0, 4000, sum_Ch0_Ch11);
+
+Fill("hodo_sum_ch1_ch6",4000, 0, 4000, sum_Ch1_Ch6);
+Fill("hodo_sum_ch7_ch12",4000, 0, 4000, sum_Ch7_Ch12);
+Fill("hodo_sum_ch13_ch24",4000, 0, 4000, sum_Ch13_Ch24);
+Fill("hodo_sum_ch24_ch31",4000, 0, 4000, sum_Ch24_Ch31);
+Fill("hodo_sum_vs_time",3000, 0, 3000,t_hit, 4000, 0, 4000,sum);
+//Fill("hodo_sum_timecut", 4000, 0, 4000, sum_timecut);
+//Fill("hodo_nhits_timecut",32,0,32, n_hits_timecut);
+//Fill("hodo_nhits_notimecut", 32, 0, 32, n_hits_notimecut);
+
+// === after the loop: fill your sum histograms onbeaminbeam gate===
+
+
+Fill(Form("hodo_sum_ch1_ch11_%s",    oname.Data()), 4000, 0, 4000, sum_Ch1_Ch11);
+Fill(Form("hodo_sum_ch0_ch11_%s",    oname.Data()), 4000, 0, 4000, sum_Ch0_Ch11);
+
+Fill(Form("hodo_sum_ch1_ch6_%s",    oname.Data()), 4000, 0, 4000, sum_Ch1_Ch6);
+Fill(Form("hodo_sum_ch7_ch12_%s",   oname.Data()), 4000, 0, 4000, sum_Ch7_Ch12);
+Fill(Form("hodo_sum_ch13_ch24_%s",  oname.Data()), 4000, 0, 4000, sum_Ch13_Ch24);
+Fill(Form("hodo_sum_ch24_ch31_%s",  oname.Data()), 4000, 0, 4000, sum_Ch24_Ch31);
+Fill(Form("hodo_sum_vs_time_%s",oname.Data()),4095, 0, 4095, t_hit, 4000, 0, 4000,sum);
+
+
+Fill(Form("hodo_sum_Ch0_Ch3_%s",    oname.Data()), 4000, 0, 4000, sum_Ch0_Ch3);
+Fill(Form("hodo_sum_Ch4_Ch7_%s",    oname.Data()), 4000, 0, 4000, sum_Ch4_Ch7);
+Fill(Form("hodo_sum_Ch8_Ch11_%s",    oname.Data()), 4000, 0, 4000, sum_Ch8_Ch11);
+Fill(Form("hodo_sum_Ch12_Ch15_%s",    oname.Data()), 4000, 0, 4000, sum_Ch12_Ch15);
+Fill(Form("hodo_sum_Ch16_Ch19_%s",    oname.Data()), 4000, 0, 4000, sum_Ch16_Ch19);
+
+Fill(Form("hodo_sum_Ch20_Ch23_%s",    oname.Data()), 4000, 0, 4000, sum_Ch20_Ch23);
+Fill(Form("hodo_sum_Ch24_Ch27_%s",    oname.Data()), 4000, 0, 4000, sum_Ch24_Ch27);
+Fill(Form("hodo_sum_Ch28_Ch31_%s",    oname.Data()), 4000, 0, 4000, sum_Ch28_Ch31);
+
+//ch group vs time
+Fill(Form("hodo_sum_ch1_ch11_vs_time_%s",oname.Data()),3000, 0, 3000,t_hit, 4000, 0, 4000,sum_Ch1_Ch11);
+Fill(Form("hodo_sum_ch0_ch11_vs_time_%s",oname.Data()),4095, 0, 4095, t_hit, 4000, 0, 4000,sum_Ch0_Ch11);
+
+Fill(Form("hodo_sum_ch1_ch6_vs_time_%s",oname.Data()),3000, 0, 3000,t_hit, 4000, 0, 4000,sum_Ch1_Ch6);
+Fill(Form("hodo_sum_ch7_ch12_vs_time_%s",oname.Data()),3000, 0, 3000,t_hit, 4000, 0, 4000,sum_Ch7_Ch12);
+Fill(Form("hodo_sum_ch13_ch2_vs_time_%s",oname.Data()),3000, 0, 3000,t_hit, 4000, 0, 4000,sum_Ch13_Ch24);
+Fill(Form("hodo_sum_ch24_ch31_vs_time_%s",oname.Data()),3000, 0, 3000,t_hit, 4000, 0, 4000,sum_Ch24_Ch31);
+
+Fill(Form("hodo_sum_timecut_%s",    oname.Data()), 4000, 0, 4000, sum_timecut);
+Fill(Form("hodo_nhits_timecut_%s",  oname.Data()),    32,  0,  32, n_hits_timecut);
+Fill(Form("hodo_nhits_notimecut_%s", oname.Data()), 32, 0, 32, n_hits_notimecut); */
+
+
+
   //having an energy gate in no dc energy 
 for (UShort_t g=0; g<gr->GetMult(); g++){
     HitCalc* hit = gr->GetHit(g);
@@ -636,6 +927,30 @@ float dtheta = hit->GetPosition().Theta() - track->GetTheta();
 
   }
 
+  for (UShort_t g = 0; g < gr->GetMultAB(); g++) {
+      for (UShort_t g1 = g + 1; g1 < gr->GetMultAB(); g1++) {
+          // Get the hits
+          HitCalc* hit = gr->GetHitAB(g);
+          HitCalc* hit1 = gr->GetHitAB(g1); // Use GetHitAB if working with AB hits, not GetHit
+
+          // Make sure hit is valid
+          if (!hit || !hit1) continue;
+
+          // Get energies
+          float energy = hit->GetEnergy();
+          float energy_dc = hit->GetDCEnergy();
+
+          // Get time difference
+          float timediff = hit1->GetTime() - hit->GetTime();
+          if (std::abs(timediff) < 1e-6) continue;  // skip very small differences to avoid div by 0
+          float delta_tgam = hit->GetTime() / timediff;
+
+
+          Fill(Form("egamAB_tgam_new_%s",oname.Data()),4000,0,4000,energy,400,-200,200,delta_tgam);
+          Fill(Form("egamABdc_tgam_new_%s",oname.Data()),4000,0,4000,energy_dc,400,-200,200,delta_tgam);
+      }
+  }
+
   for(UShort_t g=0;g<gr->GetMultAB();g++){
     HitCalc* hit = gr->GetHitAB(g);
     float energy = hit->GetEnergy();
@@ -643,7 +958,7 @@ float dtheta = hit->GetPosition().Theta() - track->GetTheta();
     Fill(Form("egamAB_%s",oname.Data()),4000,0,4000,energy);
     Fill(Form("egamABdc_%s",oname.Data()),4000,0,4000,energy_dc);
     Fill(Form("egamABdc_tgam_%s",oname.Data()),4000,0,4000,energy_dc,400,-200,200,hit->GetTime());
-    Fill(Form("egamABdc_grettheta_%s",oname.Data()),4000,0,4000,energy_dc,180,0,3.14159,hit->GetPosition().Theta());
+    //Fill(Form("egamABdc_grettheta_%s",oname.Data()),4000,0,4000,energy_dc,180,0,3.14159,hit->GetPosition().Theta());
 
 
 /*if (hit->GetTime() >= 20 && hit->GetTime() <= 26) {*/
@@ -668,12 +983,12 @@ if(found_scattering_angle_cut){
 			vector<TCutG*> reorg_scatt_cuts;
 			
 			// manually organize the cuts in the right order
-			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(3)); //0.5
-			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(4)); //1.0
-			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(5)); //1.5
-			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(0)); //2.0
-			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(1)); //2.5
-			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(2)); //3.0
+			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(0)); //0.5
+			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(1)); //1.0
+			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(2)); //1.5
+			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(3)); //2.0
+			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(4)); //2.5
+			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(5)); //3.0
 			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(6)); //3.5
 			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(7)); //4.0
 			reorg_scatt_cuts.push_back(scattering_angle_cuts.at(8)); //4.5
@@ -696,17 +1011,22 @@ if(found_scattering_angle_cut){
 				// Checking if it is within the ring I am specifying
 				if( !(reorg_scatt_cuts.at(deg_cut)->IsInside(track->GetATA(),track->GetBTA())) && reorg_scatt_cuts.at(deg_cut +1 )->IsInside(track->GetATA(),track->GetBTA()) ){
 
-					Fill(Form("atabta_%s",buffer),
+					Fill(Form("atabta_%s_tcut",buffer),
 						200,-100,100,track->GetATA(),
 						200,-100,100,track->GetBTA());
-
 					Fill(Form("xfpafp_%s_tcut",buffer),
 						600,-300,300,track->GetAFP(),
 						200,-100,100,track->GetXFP());
+            Fill(Form("afpbfp_%s_tcut",buffer),
+						200,-100,100,track->GetAFP(),
+						200,-100,100,track->GetBFP());
+					Fill(Form("scatter_%s_tcut",buffer),
+	   				500,0,0.5,track->GetTheta());
 					// Create angular acceptance that is gated on time, scattering angle, and isotope
-					/*Fill(Form("afpxfp_%s_tcut",buffer),
+					Fill(Form("afpxfp_%s_tcut",buffer),
 						600,-300,300,track->GetXFP(),
-						200,-100,100,track->GetAFP());*/
+						200,-100,100,track->GetAFP());
+		
 				}
 			}
 
@@ -738,21 +1058,7 @@ if(found_scattering_angle_cut){
 					Fill(Form("egamAB_grettheta_scattering_angle_cuts%s_tcut",buffer),
 						4000,0,4000,energy,
 						180,0,3.14159,hit->GetPosition().Theta());
-					Fill(Form("afpbfp_%s",buffer),
-						200,-100,100,track->GetAFP(),
-						200,-100,100,track->GetBFP());
 
-					Fill(Form("atabta_%s",buffer),
-						200,-100,100,track->GetATA(),
-						200,-100,100,track->GetBTA());
-
-					Fill(Form("scatter_%s_tcut",buffer),
-	   				500,0,0.5,track->GetTheta());
-
-					// Create angular acceptance that is gated on time, scattering angle, and isotope
-					Fill(Form("afpxfp_%s_tcut",buffer),
-						600,-300,300,track->GetXFP(),
-						200,-100,100,track->GetAFP());
 
 				} // end of if-statement checkinf if gammas are in the gate
 				
@@ -781,12 +1087,22 @@ if(found_scattering_angle_cut){
 
   if(fCal&(1<<2)){
 
+  Fill("xfp_vs_afp_",200,-100,100,track->GetAFP(),300,-300,300,track->GetXFP());  
 
-    Fill(Form("afp_vs_objm_%s",oname.Data()),
+  Fill(Form("xfp_vs_afp_%s",oname.Data()),
+    200,-100,100,track->GetAFP(),300,-300,300,track->GetXFP());
+
+
+  Fill(Form("afp_vs_bfp_%s",oname.Data()),
+	 100/2,-100,100,track->GetAFP());
+
+
+
+  Fill(Form("afp_vs_objm_%s",oname.Data()),
 	 fmobj_range[0],fmobj_range[1],fmobj_range[2],tof->GetMOBJ(),
 	 100/2,-100,100,track->GetAFP());
 
-    Fill(Form("afp_vs_objmC_%s",oname.Data()),
+  Fill(Form("afp_vs_objmC_%s",oname.Data()),
 	 fmobjC_range[0],fmobjC_range[1],fmobjC_range[2],tof->GetMOBJC(),
 	 100/2,-100,100,track->GetAFP());
 
